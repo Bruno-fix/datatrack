@@ -15,22 +15,34 @@ st.set_page_config(
     layout="wide"
 )
 
-# Apresentação
-st.title("DataTrack")
-st.subheader("Sistema de Análise e Tratamento de Dados")
 
-st.write(
-    "Importe, analise e organize suas planilhas "
-    "de maneira simples e eficiente."
+# Apresentação da aplicação
+st.title("📊 DataTrack")
+
+st.caption(
+    "Plataforma de Análise e Tratamento de Dados"
 )
+
+st.markdown(
+    "Importe planilhas, identifique inconsistências "
+    "e exporte dados tratados de forma simples e segura."
+)
+
+st.divider()
 
 # Importação de arquivos
-st.header("Importação de Dados")
+with st.container(border=True):
+    st.subheader("1. Importação de Dados")
 
-uploaded_file = st.file_uploader(
-    "Selecione uma planilha CSV ou Excel",
-    type=["csv", "xlsx"]
-)
+    st.caption(
+        "Selecione um arquivo CSV ou Excel "
+        "para iniciar a análise."
+    )
+
+    uploaded_file = st.file_uploader(
+        "Selecione uma planilha CSV ou Excel",
+        type=["csv", "xlsx"]
+    )
 
 # Verifica se o usuário enviou um arquivo
 if uploaded_file is not None:
@@ -69,22 +81,25 @@ if uploaded_file is not None:
         registros_duplicados = indicadores["registros_duplicados"]
         valores_ausentes = indicadores["valores_ausentes"]
 
-        # Criação dos indicadores
-        col1, col2, col3 = st.columns(3)
+        # Indicadores em cartões
+        col1, col2, col3 = st.columns(3, gap="medium")
 
         col1.metric(
-            "Total de registros",
-            total_registros
+            label="Total de registros",
+            value=total_registros,
+            border=True
         )
 
         col2.metric(
-            "Registros duplicados",
-            registros_duplicados
+            label="Registros duplicados",
+            value=registros_duplicados,
+            border=True
         )
 
         col3.metric(
-            "Valores ausentes",
-            valores_ausentes
+            label="Valores ausentes",
+            value=valores_ausentes,
+            border=True
         )
 
         # Exibe um aviso se houver problemas
@@ -98,15 +113,27 @@ if uploaded_file is not None:
             )
     
         # Diagnóstico detalhado dos dados
-        st.subheader("Diagnóstico de Dados")
+        st.subheader("2. Diagnóstico de Dados")
 
-        # Obtém os registros com inconsistências
         duplicatas, linhas_incompletas = (
             localizar_inconsistencias(df)
         )
 
-        # Apresenta as duplicatas
-        with st.expander("Visualizar registros duplicados"):
+        # Cria abas para organizar o diagnóstico
+        aba_duplicatas, aba_incompletas = st.tabs(
+            [
+                "🔁 Registros duplicados",
+                "⚠️ Registros incompletos"
+            ]
+        )
+
+        # Primeira aba: registros duplicados
+        with aba_duplicatas:
+            st.caption(
+                f"{len(duplicatas)} ocorrência(s) "
+                "envolvida(s) em duplicidades."
+            )
+
             if not duplicatas.empty:
                 st.dataframe(
                     duplicatas,
@@ -114,10 +141,17 @@ if uploaded_file is not None:
                     hide_index=True
                 )
             else:
-                st.info("Nenhum registro duplicado encontrado.")
+                st.success(
+                    "Nenhum registro duplicado encontrado."
+                )
 
-        # Apresenta os registros incompletos
-        with st.expander("Visualizar registros incompletos"):
+        # Segunda aba: registros incompletos
+        with aba_incompletas:
+            st.caption(
+                f"{len(linhas_incompletas)} registro(s) "
+                "com pelo menos um campo vazio."
+            )
+
             if not linhas_incompletas.empty:
                 st.dataframe(
                     linhas_incompletas,
@@ -125,74 +159,104 @@ if uploaded_file is not None:
                     hide_index=True
                 )
             else:
-                st.info("Nenhum registro incompleto encontrado.")
-    
+                st.success(
+                    "Nenhum registro incompleto encontrado."
+                )
+                
         # Tratamento de dados
-        st.subheader("Tratamento de Dados")
+        with st.container(border=True):
+            st.subheader("3. Tratamento de Dados")
 
-        # Opções de tratamento
-        remover_duplicatas = st.checkbox(
-            "Remover registros duplicados"
-        )
+            st.caption(
+                "Escolha as operações que deseja aplicar. "
+                "O arquivo original será preservado."
+            )
 
-        tratamento_ausentes = st.selectbox(
-            "Como deseja tratar os valores ausentes?",
-            [
-                "Manter valores ausentes",
-                "Remover linhas incompletas",
-                "Preencher textos com 'Não informado'"
-            ]
-        )
+            # Opções de tratamento
+            remover_duplicatas = st.checkbox(
+                "Remover registros duplicados"
+            )
 
-        # Executa as regras de tratamento
-        df_tratado = tratar_dados(
-            df=df,
-            remover_duplicatas=remover_duplicatas,
-            tratamento_ausentes=tratamento_ausentes
-        )
+            tratamento_ausentes = st.selectbox(
+                "Como deseja tratar os valores ausentes?",
+                [
+                    "Manter valores ausentes",
+                    "Remover linhas incompletas",
+                    "Preencher textos com 'Não informado'"
+                ]
+            )
 
-        # Indicadores antes e depois
-        col1, col2 = st.columns(2)
+            # Executa as regras de tratamento
+            df_tratado = tratar_dados(
+                df=df,
+                remover_duplicatas=remover_duplicatas,
+                tratamento_ausentes=tratamento_ausentes
+            )
 
-        col1.metric(
-            "Registros originais",
-            df.shape[0]
-        )
+            # Calcula os resultados
+            registros_removidos = (
+                df.shape[0] - df_tratado.shape[0]
+            )
 
-        col2.metric(
-            "Registros após tratamento",
-            df_tratado.shape[0]
-        )
+            valores_ausentes_restantes = int(
+                df_tratado.isna().sum().sum()
+            )
 
-        valores_ausentes_restantes = int(
-            df_tratado.isna().sum().sum()
-        )
+            # Indicadores em cartões
+            col1, col2, col3 = st.columns(3)
 
-        st.metric(
-            "Valores ausentes restantes",
-            valores_ausentes_restantes
-        )
+            col1.metric(
+                "Registros originais",
+                df.shape[0],
+                border=True
+            )
 
-        # Pré-visualização
-        st.write("Pré-visualização dos dados tratados")
+            col2.metric(
+                "Registros após tratamento",
+                df_tratado.shape[0],
+                border=True
+            )
 
-        st.dataframe(
-            df_tratado.head(20),
-            width="stretch",
-            hide_index=True
-        )
+            col3.metric(
+                "Valores ausentes restantes",
+                valores_ausentes_restantes,
+                border=True
+            )
 
-        # Exportação dos dados tratados
-        csv = df_tratado.to_csv(
-            index=False
-        ).encode("utf-8-sig")
+            st.caption(
+                f"Registros removidos: {registros_removidos}"
+            )
 
-        st.download_button(
-            label="Baixar planilha tratada",
-            data=csv,
-            file_name="datatrack_tratado.csv",
-            mime="text/csv"
-        )
+        # Exportação de dados
+        with st.container(border=True):
+            st.subheader("4. Exportação de Dados")
+
+            st.caption(
+                "Confira o resultado antes de baixar "
+                "a planilha tratada."
+            )
+
+            # Pré-visualização
+            st.dataframe(
+                df_tratado.head(20),
+                width="stretch",
+                hide_index=True
+            )
+
+            # Converte o DataFrame em CSV
+            csv = df_tratado.to_csv(
+                index=False
+            ).encode("utf-8-sig")
+
+            # Botão de download
+            st.download_button(
+                label="📥 Baixar planilha tratada",
+                data=csv,
+                file_name="datatrack_tratado.csv",
+                mime="text/csv",
+                type="primary",
+                width="stretch"
+            )
 
     except Exception as erro:
         st.error(f"Não foi possível ler o arquivo: {erro}")
