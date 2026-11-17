@@ -8,6 +8,12 @@ O projeto tem como objetivo simplificar tarefas comuns relacionadas à qualidade
 
 Desenvolvido com **Streamlit e Pandas**, o DataTrack oferece uma interface interativa para exploração de conjuntos de dados e exportação dos resultados processados.
 
+## Demonstração Online
+
+Acesse a aplicação DataTrack diretamente pelo navegador:
+
+[Experimentar o DataTrack](https://datatrack-bruno.streamlit.app/)
+
 ## Tecnologias
 
 - Python
@@ -79,11 +85,9 @@ Essa separação melhora a manutenibilidade, a testabilidade e a reutilização 
 ### 1. Clonar o Repositório
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Bruno-fix/datatrack.git
 cd datatrack
 ```
-
-Substitua `<repository-url>` pela URL real do repositório no GitHub após sua publicação.
 
 ### 2. Criar um Ambiente Virtual
 
